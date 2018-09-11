@@ -42,26 +42,5 @@ class App : Application() {
             notificationManager!!.createNotificationChannel(channel)
 
         }
-
-        scheduleJob()
-    }
-
-    fun scheduleJob() {
-        val componentName = ComponentName(applicationContext, CalendarJobService::class.java)
-
-        val jobInfo = JobInfo.Builder(App.CONTENT_JOB_ID, componentName)
-                .addTriggerContentUri(JobInfo.TriggerContentUri(CalendarContract.Events.CONTENT_URI, JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS))
-                .build()
-
-        val scheduler = baseContext.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-
-        val result = scheduler.schedule(jobInfo)
-
-        if(result == JobScheduler.RESULT_SUCCESS) {
-            Log.i(App.LOG_TAG, "JobScheduler success")
-        }
-        else {
-            Log.e(App.LOG_TAG,"JobScheduler failed")
-        }
     }
 }
