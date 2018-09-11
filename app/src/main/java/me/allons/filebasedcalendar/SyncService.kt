@@ -22,7 +22,7 @@ class SyncService : Service() {
          */
         synchronized(sSyncAdapterLock) {
             if (sSyncAdapter == null) {
-                sSyncAdapter = SyncAdapter(getApplicationContext(), true)
+                sSyncAdapter = SyncAdapter(applicationContext, true, false)
             }
         }
     }

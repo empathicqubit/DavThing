@@ -22,6 +22,7 @@ class App : Application() {
         const val CHANNEL_ID = "me.allons.filebasedcalendar"
         const val CONTENT_JOB_ID = 9248
         const val LOG_TAG = "me.allons.filebasedcalendar"
+        val ACCOUNT_DATA_STORAGE_PATH = App::class.qualifiedName + ".account_data.STORAGE_PATH"
     }
 
     override fun onCreate() {
@@ -42,23 +43,7 @@ class App : Application() {
 
         }
 
-        addAccount()
-
         scheduleJob()
-    }
-
-    fun addAccount() {
-        val mgr = getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
-        val accountType = resources.getString(R.string.account_type)
-        val accountName = resources.getString(R.string.account_name)
-        if(mgr.getAccountsByType(accountType).size > 0) {
-            return
-        }
-
-        val account = Account(accountName, accountType)
-        if(!mgr.addAccountExplicitly(account, null, null)) {
-            throw Error("Couldn't add account")
-        }
     }
 
     fun scheduleJob() {

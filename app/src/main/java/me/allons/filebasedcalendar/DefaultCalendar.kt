@@ -20,9 +20,11 @@ class DefaultCalendar (
             return if (calendars.isEmpty()) {
                 val values = ContentValues(3)
                 values.put(CalendarContract.Calendars.NAME, account.name)
-                values.put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, "File Based Calendar")
-                values.put(CalendarContract.Calendars.ALLOWED_REMINDERS,
-                        CalendarContract.Reminders.METHOD_DEFAULT)
+                values.put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, account.name)
+                values.put(CalendarContract.Calendars.ACCOUNT_NAME, account.name)
+                values.put(CalendarContract.Calendars.ACCOUNT_TYPE, account.type)
+                values.put(CalendarContract.Calendars.OWNER_ACCOUNT, account.name)
+                values.put(CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL, CalendarContract.Calendars.CAL_ACCESS_OWNER)
                 val uri = AndroidCalendar.create(account, provider, values)
 
                 DefaultCalendar(account, provider, ContentUris.parseId(uri))

@@ -4,37 +4,58 @@ import android.accounts.Account
 import android.content.ContentProviderClient
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.Context
+import android.net.Uri
 import android.provider.CalendarContract
+import android.support.v4.provider.DocumentFile
 import android.util.Log
 import at.bitfire.ical4android.*
+import net.fortuna.ical4j.util.RandomUidGenerator
 import org.apache.commons.lang3.exception.ContextedException
 import java.io.*
+import java.net.URLConnection
+import java.util.*
 
 class CalendarStore {
-    private var _path : String = ""
+    private val _doc : DocumentFile
+    private val _context : Context
+    private val events: MutableMap<String, Event> = mutableMapOf()
 
     public enum class SyncDirection(val value : Int) {
         TO_FILESYSTEM(1),
         TO_CALENDAR(2),
     }
 
-    public constructor(path : String) {
-        _path = path
+    public constructor(uri : Uri, context: Context) {
+        _context = context
+        _doc = DocumentFile.fromTreeUri(context, uri) ?: throw IllegalArgumentException()
     }
 
     public fun refresh() {
         events.clear()
 
-        val files = File(_path).listFiles { f -> f.endsWith("*.ics") }
+        val files = _doc.listFiles()
         for(file in files) {
-            val reader = FileReader(file)
-            processVEvent(file.name, "", reader)
+            val fileName = file.name ?: continue
+
+            if(!file.isFile || !fileName.endsWith(".ics")) {
+                continue
+            }
+
+            val stream = _context.contentResolver.openInputStream(file.uri)
+            val reader = InputStreamReader(stream)
+
+            processVEvent(fileName, "", reader)
+
             reader.close()
+            stream.close()
         }
     }
 
     public fun syncEvents(provider : ContentProviderClient, account : Account, direction : SyncDirection) {
         refresh()
+
+        Log.v(App.LOG_TAG, events.size.toString() + " total files")
 
         when(direction) {
             SyncDirection.TO_CALENDAR -> {
@@ -46,9 +67,9 @@ class CalendarStore {
                     var found = false
                     for(android in local) {
                         val aEvent = android.event ?: continue
-                        if(aEvent.uid == event.uid) {
+                        if(aEvent.uid == event.value.uid) {
                             found = true
-                            android.update(event)
+                            android.update(event.value)
                             break
                         }
                     }
@@ -57,56 +78,89 @@ class CalendarStore {
                         continue
                     }
 
-                    val add = DefaultEvent(cal, event)
+                    val add = DefaultEvent(cal, event.value)
                     add.add(batch)
                 }
 
                 for(android in local) {
                     val aEvent = android.event ?: continue
 
-                    if(!events.any { e -> e.uid == aEvent.uid }) {
+                    if(!events.any { e -> e.value.uid == aEvent.uid }) {
                         android.delete()
                     }
                 }
             }
             SyncDirection.TO_FILESYSTEM -> {
                 val cal = DefaultCalendar.findOrCreate(account, provider)
-                val local = cal.queryEvents().map { a -> a.event }
-                for(android in local) {
-                    android ?: continue
+                val full = cal.queryEvents()
+                val local = full.map { it.event }
 
-                    for(event in events) {
-                        if(android.uid == event.uid) {
-                            events.remove(event)
-                            break
+                Log.v(App.LOG_TAG, local.size.toString() + " total calendar items")
+
+                for(android in local) {
+                    if(android == null) {
+                        Log.v(App.LOG_TAG,"Android event was null")
+                        continue
+                    }
+
+                    Log.v(App.LOG_TAG, "Android UID: " + android.uid)
+
+                    if(android.uid != null) {
+                        for (event in events) {
+                            if (android.uid == event.value.uid) {
+                                events.remove(event.key)
+                            }
                         }
                     }
+                    else {
+                        android.uid = UUID.randomUUID().toString()
+                        Log.v(App.LOG_TAG, "Created ID " + android.uid + " for event.")
+                    }
 
-                    events.add(android)
+                    events[android.uid + ".ics"] = android
                 }
 
-                for(event in events) {
-                    if(!local.contains(event)) {
-                        val file = File(_path + "/" + event.uid + ".ics")
+                for(event in events.map { it }.asSequence()) {
+                    Log.v(App.LOG_TAG, "Checking event " + event.key)
+                    if(event.value.uid + ".ics" != event.key || !local.any { it != null && it.uid == event.value.uid }) {
+                        Log.v(App.LOG_TAG, "Removing event " + event.key)
+
+                        val file = _doc.findFile(event.key) ?: continue
                         file.delete()
+                        events.remove(event.key)
                     }
                 }
 
+                Log.v(App.LOG_TAG, events.size.toString() + " total items to be synced)")
+
                 for(event in events) {
-                    val stream = FileOutputStream(_path + "/" + event.uid + ".ics")
-                    event.write(stream)
+                    val displayName = event.key
+                    val file = _doc.findFile(displayName) ?: _doc.createFile("text/calendar", displayName) ?: throw NullPointerException("Could not find or create file")
+
+                    Log.v(App.LOG_TAG, file.uri.lastPathSegment)
+
+                    val stream = _context.contentResolver.openOutputStream(file.uri)
+
+                    Log.v(App.LOG_TAG, "Writing event " + event.key)
+
+                    event.value.write(stream)
                     stream.close()
                 }
+
+                for(android in full) {
+                    val evt = android.event ?: throw NullPointerException("Missing event")
+                    Log.v(App.LOG_TAG, "Updating event " + evt.uid)
+
+                    android.update(evt)
+                }
             }
-            else -> throw Exception("What happen?")
         }
     }
-
-    public val events: MutableList<Event> = mutableListOf()
 
     private fun processVEvent(fileName: String, eTag: String, reader: Reader) {
         var evt : List<Event>
         try {
+            Log.v(App.LOG_TAG, "Loading $fileName")
             evt = Event.fromReader(reader)
         } catch (e: InvalidCalendarException) {
             Log.wtf(App.LOG_TAG, "Received invalid iCalendar, ignoring", e)
@@ -114,9 +168,9 @@ class CalendarStore {
         }
 
         if (evt.size == 1) {
-            val newData = events.first()
+            val newData = evt.first()
 
-            events.add(newData)
+            events[fileName] = newData
         } else {
             Log.i(App.LOG_TAG, "Received VCALENDAR with not exactly one VEVENT with UID and without RECURRENCE-ID; ignoring $fileName")
         }

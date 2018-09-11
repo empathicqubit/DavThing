@@ -1,74 +1,68 @@
 package me.allons.filebasedcalendar
 
-import android.accounts.NetworkErrorException
-import android.accounts.Account
-import android.accounts.AccountAuthenticatorResponse
+import android.accounts.*
 import android.os.Bundle
-import android.accounts.AbstractAccountAuthenticator
 import android.content.Context
+import android.content.Intent
 
 
 /*
  * Implement AbstractAccountAuthenticator and stub out all
  * of its methods
  */
-class Authenticator// Simple constructor
-(context: Context) : AbstractAccountAuthenticator(context) {
-    // Editing properties is not supported
-    override fun editProperties(
-            r: AccountAuthenticatorResponse, s: String): Bundle {
+class Authenticator : AbstractAccountAuthenticator {
+    private val _context: Context
+
+    constructor(context : Context) : super(context) {
+        _context = context
+    }
+
+    override fun editProperties(response: AccountAuthenticatorResponse?, accountType: String?): Bundle {
         throw UnsupportedOperationException()
     }
 
-    // Don't add additional accounts
     @Throws(NetworkErrorException::class)
-    override fun addAccount(
-            r: AccountAuthenticatorResponse,
-            s: String,
-            s2: String,
-            strings: Array<String>,
-            bundle: Bundle): Bundle? {
+    override fun addAccount(response: AccountAuthenticatorResponse?, accountType: String?, authTokenType: String?, requiredFeatures: Array<out String>?, options: Bundle?): Bundle {
+        val clazz = AuthenticatorActivity::class.java
+        val intent = Intent(_context, clazz)
+        intent.putExtra(AuthenticatorActivity.EXTRA_ACCOUNT_TYPE, accountType)
+        intent.putExtra(AuthenticatorActivity.EXTRA_AUTH_TYPE, authTokenType)
+        intent.putExtra(AuthenticatorActivity.EXTRA_IS_ADDING_NEW_ACCOUNT, true)
+        intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response)
+        val bundle = Bundle()
+        bundle.putParcelable(AccountManager.KEY_INTENT, intent)
+        return bundle
+    }
+
+    @Throws(NetworkErrorException::class)
+    override fun confirmCredentials(response: AccountAuthenticatorResponse?, account: Account?, options: Bundle?): Bundle? {
         return null
     }
 
-    // Ignore attempts to confirm credentials
     @Throws(NetworkErrorException::class)
-    override fun confirmCredentials(
-            r: AccountAuthenticatorResponse,
-            account: Account,
-            bundle: Bundle): Bundle? {
-        return null
+    override fun getAuthToken(response: AccountAuthenticatorResponse?, account: Account?, authTokenType: String?, options: Bundle?): Bundle {
+        account ?: throw IllegalArgumentException()
+
+        val clazz = AuthenticatorActivity::class.java
+        val intent = Intent(_context, clazz)
+        intent.putExtra(AuthenticatorActivity.EXTRA_ACCOUNT_TYPE, account.type)
+        intent.putExtra(AuthenticatorActivity.EXTRA_AUTH_TYPE, authTokenType)
+        intent.putExtra(AuthenticatorActivity.EXTRA_IS_ADDING_NEW_ACCOUNT, true)
+        intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response)
+        val bundle = Bundle()
+        bundle.putParcelable(AccountManager.KEY_INTENT, intent)
+        return bundle
     }
 
-    // Getting an authentication token is not supported
-    @Throws(NetworkErrorException::class)
-    override fun getAuthToken(
-            r: AccountAuthenticatorResponse,
-            account: Account,
-            s: String,
-            bundle: Bundle): Bundle {
+    override fun getAuthTokenLabel(authTokenType: String?): String {
         throw UnsupportedOperationException()
     }
 
-    // Getting a label for the auth token is not supported
-    override fun getAuthTokenLabel(s: String): String {
+    override fun updateCredentials(response: AccountAuthenticatorResponse?, account: Account?, authTokenType: String?, options: Bundle?): Bundle {
         throw UnsupportedOperationException()
     }
 
-    // Updating user credentials is not supported
-    @Throws(NetworkErrorException::class)
-    override fun updateCredentials(
-            r: AccountAuthenticatorResponse,
-            account: Account,
-            s: String, bundle: Bundle): Bundle {
-        throw UnsupportedOperationException()
-    }
-
-    // Checking features for the account is not supported
-    @Throws(NetworkErrorException::class)
-    override fun hasFeatures(
-            r: AccountAuthenticatorResponse,
-            account: Account, strings: Array<String>): Bundle {
+    override fun hasFeatures(response: AccountAuthenticatorResponse?, account: Account?, features: Array<out String>?): Bundle {
         throw UnsupportedOperationException()
     }
 }

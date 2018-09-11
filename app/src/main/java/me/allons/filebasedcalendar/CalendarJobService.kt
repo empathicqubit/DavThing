@@ -22,13 +22,15 @@ class CalendarJobService : JobService() {
 
         Log.i(App.LOG_TAG, "I'm gonna call you calendar, cuz your days are numbered!")
 
-        val provider = baseContext.contentResolver.acquireContentProviderClient(CalendarContract.CONTENT_URI)
         val mgr = baseContext.getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
 
-        val account = mgr.getAccountsByType(resources.getString(R.string.account_type))[0]
+        val accounts = mgr.getAccountsByType(resources.getString(R.string.account_type))
 
         try {
-            ContentResolver.requestSync(account, CalendarContract.AUTHORITY, Bundle.EMPTY)
+            for(account in accounts) {
+                Log.v(App.LOG_TAG, "Synchronizing account " + account.name + " " + account.type)
+                ContentResolver.requestSync(account, CalendarContract.AUTHORITY, Bundle.EMPTY)
+            }
         }
         catch(e : SecurityException) {
             Log.e(App.LOG_TAG, "There was a problem getting the events", e)

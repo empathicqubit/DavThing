@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sync-adapter android:contentAuthority="content://com.android.calendar"
+<sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
+    android:contentAuthority="@string/calendar_content_authority"
     android:accountType="@string/account_type"
-    android:userVisible="false"
+    android:label="@string/account_display_name"
+    android:name="@string/account_display_name"
+    android:icon="@drawable/ic_launcher_foreground"
+    android:userVisible="true"
     android:allowParallelSyncs="false"
     android:supportsUploading="true"
     android:isAlwaysSyncable="true"
-    xmlns:android="http://schemas.android.com/apk/res/android" />
+    />
