@@ -3,7 +3,7 @@
     <string name="channel_name">me.allons.davthing</string>
     <string name="channel_description">DavThing Notification Channel</string>
     <string name="account_display_name">DavThing</string>
-    <string name="title_activity_authenticator">DavThingk</string>
+    <string name="title_activity_authenticator">DavThing: Add Account</string>
     <string name="account_path_selector">Choose a folder…</string>
     <string name="account_confirm">Save</string>
     <string name="account_cancel">Cancel</string>
