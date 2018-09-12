@@ -1,4 +1,4 @@
-package me.allons.filebasedcalendar
+package me.allons.davthing
 
 import android.content.ContentValues
 import at.bitfire.ical4android.AndroidCalendar

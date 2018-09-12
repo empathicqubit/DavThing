@@ -1,4 +1,4 @@
-package me.allons.filebasedcalendar
+package me.allons.davthing
 
 import android.accounts.AccountManager
 import android.app.Application
@@ -14,11 +14,11 @@ import android.util.Log
 
 class App : Application() {
     companion object {
-        const val NOTIFICATION_CHANNEL_ID = "me.allons.filebasedcalendar"
-        const val LOG_TAG = "me.allons.filebasedcalendar"
+        val NOTIFICATION_CHANNEL_ID = App::class.qualifiedName + ""
+        val LOG_TAG = App::class.qualifiedName + ""
         val ACCOUNT_DATA_STORAGE_PATH = App::class.qualifiedName + ".account_data.STORAGE_PATH"
         val SYNC_REQUEST_DIRECTION = App::class.qualifiedName + ".sync_request.DIRECTION"
-        const val ACCOUNT_TYPE = "me.allons.filebasedcalendar.mainaccount"
+        val ACCOUNT_TYPE = App::class.qualifiedName + ".mainaccount"
 
         private val observers : MutableList<FileObserver> = mutableListOf()
     }

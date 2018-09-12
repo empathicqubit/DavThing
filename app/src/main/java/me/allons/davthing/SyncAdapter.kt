@@ -1,4 +1,4 @@
-package me.allons.filebasedcalendar
+package me.allons.davthing
 
 import android.accounts.Account
 import android.accounts.AccountManager

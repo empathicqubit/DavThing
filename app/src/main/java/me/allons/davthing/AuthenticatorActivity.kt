@@ -1,4 +1,4 @@
-package me.allons.filebasedcalendar
+package me.allons.davthing
 
 import android.accounts.Account
 import android.accounts.AccountManager
@@ -86,10 +86,16 @@ class AuthenticatorActivity : AppCompatActivity {
         val account = Account(accountName, App.ACCOUNT_TYPE)
 
         accountManager.addAccountExplicitly(account, null, userdata)
-        ContentResolver.setSyncAutomatically(account, CalendarContract.AUTHORITY, true)
 
         val provider = contentResolver.acquireContentProviderClient(CalendarContract.CONTENT_URI)
         DefaultCalendar.findOrCreate(account, provider)
+
+        try {
+            val store = CalendarStore(selectedPath, this).syncEvents(provider, account, CalendarStore.SyncDirection.TO_CALENDAR)
+        }
+        finally {
+            ContentResolver.setSyncAutomatically(account, CalendarContract.AUTHORITY, true)
+        }
 
         finish()
     }
@@ -132,20 +138,6 @@ class AuthenticatorActivity : AppCompatActivity {
                 }
                 else {
                     calendarGranted()
-                }
-            }
-        }
-
-        manual_run.setOnClickListener {
-            AsyncTask.execute {
-                val accountManager = getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
-
-                val accounts = accountManager.getAccountsByType(App.ACCOUNT_TYPE)
-
-                for(account in accounts) {
-                    val res = SyncResult()
-                    val provider = contentResolver.acquireContentProviderClient(CalendarContract.CONTENT_URI)
-                    SyncAdapter(baseContext, true, false).onPerformSync(account, Bundle.EMPTY, CalendarContract.AUTHORITY, provider, res)
                 }
             }
         }

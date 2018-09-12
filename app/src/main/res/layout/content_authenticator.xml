@@ -62,14 +62,6 @@
             android:text="@string/account_name_instructions"
             />
 
-        <Button
-            android:layout_below="@id/account_name_instructions"
-            android:id="@+id/manual_run"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Manually run sync"
-            />
-
         <LinearLayout
             android:baselineAligned="true"
             android:orientation="horizontal"

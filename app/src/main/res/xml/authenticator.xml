@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="me.allons.filebasedcalendar.mainaccount"
+    android:accountType="me.allons.davthing.App.mainaccount"
     android:label="@string/account_display_name"
     android:name="@string/account_display_name"
     android:icon="@drawable/ic_launcher_foreground"
