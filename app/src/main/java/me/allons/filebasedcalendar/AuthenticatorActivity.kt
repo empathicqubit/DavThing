@@ -2,10 +2,9 @@ package me.allons.filebasedcalendar
 
 import android.accounts.Account
 import android.accounts.AccountManager
-import android.content.ContentResolver
-import android.content.Context
-import android.content.Intent
-import android.content.SyncResult
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.AsyncTask
@@ -84,7 +83,7 @@ class AuthenticatorActivity : AppCompatActivity {
 
         val accountManager = getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
 
-        val account = Account(accountName, resources.getString(R.string.account_type))
+        val account = Account(accountName, App.ACCOUNT_TYPE)
 
         accountManager.addAccountExplicitly(account, null, userdata)
         ContentResolver.setSyncAutomatically(account, CalendarContract.AUTHORITY, true)
@@ -125,8 +124,11 @@ class AuthenticatorActivity : AppCompatActivity {
 
         account_confirm.setOnClickListener {
             if(intent.getBooleanExtra(EXTRA_IS_ADDING_NEW_ACCOUNT, true)) {
-                if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_CALENDAR, android.Manifest.permission.READ_CALENDAR), CALENDAR_REQUEST_CODE)
+                if(
+                    ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                        || ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_CALENDAR, android.Manifest.permission.READ_CALENDAR, android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE), CALENDAR_REQUEST_CODE)
                 }
                 else {
                     calendarGranted()
@@ -138,7 +140,7 @@ class AuthenticatorActivity : AppCompatActivity {
             AsyncTask.execute {
                 val accountManager = getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
 
-                val accounts = accountManager.getAccountsByType(resources.getString(R.string.account_type))
+                val accounts = accountManager.getAccountsByType(App.ACCOUNT_TYPE)
 
                 for(account in accounts) {
                     val res = SyncResult()

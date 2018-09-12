@@ -21,6 +21,12 @@ class CalendarStore {
     private val _context : Context
     private val events: MutableMap<String, Event> = mutableMapOf()
 
+    companion object {
+        public fun isValidFilename(fileName : String) : Boolean {
+            return !fileName.startsWith(".") && fileName.endsWith(".ics") && !fileName.contains(".sync-conflict-")
+        }
+    }
+
     public enum class SyncDirection(val value : Int) {
         TO_FILESYSTEM(1),
         TO_CALENDAR(2),
@@ -38,7 +44,7 @@ class CalendarStore {
         for(file in files) {
             val fileName = file.name ?: continue
 
-            if(!file.isFile || !fileName.endsWith(".ics")) {
+            if(!file.isFile || !isValidFilename(fileName)) {
                 continue
             }
 
@@ -63,11 +69,22 @@ class CalendarStore {
                 val local = cal.queryEvents()
                 val batch = BatchOperation(cal.provider)
 
+                for(android in local) {
+                    val aEvent = android.event ?: continue
+
+                    if(!events.any { e -> e.value.uid == aEvent.uid }) {
+                        Log.v(App.LOG_TAG, "Deleting: " + aEvent.uid)
+                        Log.v(App.LOG_TAG, "Title: " + aEvent.summary)
+                        android.delete()
+                    }
+                }
+
                 for(event in events) {
                     var found = false
                     for(android in local) {
                         val aEvent = android.event ?: continue
                         if(aEvent.uid == event.value.uid) {
+                            Log.v(App.LOG_TAG,"Updating: " + aEvent.uid)
                             found = true
                             android.update(event.value)
                             break
@@ -78,17 +95,12 @@ class CalendarStore {
                         continue
                     }
 
+                    Log.v(App.LOG_TAG, "Adding: " + event.value.uid)
                     val add = DefaultEvent(cal, event.value)
                     add.add(batch)
                 }
 
-                for(android in local) {
-                    val aEvent = android.event ?: continue
-
-                    if(!events.any { e -> e.value.uid == aEvent.uid }) {
-                        android.delete()
-                    }
-                }
+                batch.commit()
             }
             SyncDirection.TO_FILESYSTEM -> {
                 val cal = DefaultCalendar.findOrCreate(account, provider)

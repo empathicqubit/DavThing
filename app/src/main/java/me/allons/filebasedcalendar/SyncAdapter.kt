@@ -2,10 +2,7 @@ package me.allons.filebasedcalendar
 
 import android.accounts.Account
 import android.accounts.AccountManager
-import android.content.AbstractThreadedSyncAdapter
-import android.content.ContentProviderClient
-import android.content.Context
-import android.content.SyncResult
+import android.content.*
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -40,11 +37,23 @@ class SyncAdapter : AbstractThreadedSyncAdapter {
 
         val storagePath = mgr.getUserData(account, App.ACCOUNT_DATA_STORAGE_PATH)
 
+        val direction = CalendarStore.SyncDirection.valueOf(extras.getString(App.SYNC_REQUEST_DIRECTION, "TO_FILESYSTEM"))
+
+        Log.v(App.LOG_TAG, "Sync direction: $direction")
+
+        val serviceIntent = Intent(context, CalendarFileService::class.java)
         try {
-            CalendarStore(Uri.parse(storagePath), context).syncEvents(provider, account, CalendarStore.SyncDirection.TO_FILESYSTEM)
+            if(direction == CalendarStore.SyncDirection.TO_FILESYSTEM) {
+                context.stopService(serviceIntent)
+            }
+
+            CalendarStore(Uri.parse(storagePath), context).syncEvents(provider, account, direction)
         }
         catch(e : SecurityException) {
             Log.e(App.LOG_TAG, "There was a problem getting the events", e)
+        }
+        finally {
+            context.startService(serviceIntent)
         }
     }
 }

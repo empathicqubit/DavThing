@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
     android:contentAuthority="@string/calendar_content_authority"
-    android:accountType="@string/account_type"
+    android:accountType="me.allons.filebasedcalendar.mainaccount"
     android:label="@string/account_display_name"
     android:name="@string/account_display_name"
     android:icon="@drawable/ic_launcher_foreground"
