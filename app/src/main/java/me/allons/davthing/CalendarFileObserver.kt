@@ -25,7 +25,7 @@ class CalendarFileObserver : FileObserver {
             Log.v(App.LOG_TAG, "Synchronizing account " + account.name + " " + account.type)
 
             val bundle = Bundle()
-            bundle.putString(App.SYNC_REQUEST_DIRECTION, CalendarStore.SyncDirection.TO_CALENDAR.toString())
+            bundle.putString(SyncAdapter.SYNC_REQUEST_DIRECTION, CalendarStore.SyncDirection.TO_CALENDAR.toString())
 
             ContentResolver.requestSync(account, CalendarContract.AUTHORITY, bundle)
         }

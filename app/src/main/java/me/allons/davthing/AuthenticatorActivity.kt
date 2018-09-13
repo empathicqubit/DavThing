@@ -91,11 +91,15 @@ class AuthenticatorActivity : AppCompatActivity {
         DefaultCalendar.findOrCreate(account, provider)
 
         try {
-            val store = CalendarStore(selectedPath, this).syncEvents(provider, account, CalendarStore.SyncDirection.TO_CALENDAR)
+            CalendarStore(selectedPath, this).syncEvents(provider, account, CalendarStore.SyncDirection.TO_CALENDAR)
         }
         finally {
             ContentResolver.setSyncAutomatically(account, CalendarContract.AUTHORITY, true)
         }
+
+        val intent = Intent(this, CalendarFileService::class.java)
+        stopService(intent)
+        startService(intent)
 
         finish()
     }

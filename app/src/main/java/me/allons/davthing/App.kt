@@ -17,12 +17,8 @@ class App : Application() {
         val NOTIFICATION_CHANNEL_ID = App::class.qualifiedName + ""
         val LOG_TAG = App::class.qualifiedName + ""
         val ACCOUNT_DATA_STORAGE_PATH = App::class.qualifiedName + ".account_data.STORAGE_PATH"
-        val SYNC_REQUEST_DIRECTION = App::class.qualifiedName + ".sync_request.DIRECTION"
         val ACCOUNT_TYPE = App::class.qualifiedName + ".mainaccount"
-
-        private val observers : MutableList<FileObserver> = mutableListOf()
     }
-
 
     override fun onCreate() {
         super.onCreate()

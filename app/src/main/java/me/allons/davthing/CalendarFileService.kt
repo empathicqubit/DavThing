@@ -19,6 +19,9 @@ import java.io.File
 class CalendarFileService : Service() {
     companion object {
         private const val NOTIFICATION : Int = R.string.service_started
+
+        val ACTION_SUSPEND = App::class.qualifiedName + ".action.SUSPEND_FILE_SERVICE"
+        val ACTION_RESUME = App::class.qualifiedName + ".action.RESUME_FILE_SERVICE"
     }
 
     inner class CalendarFileServiceBinder : Binder() {
@@ -29,9 +32,7 @@ class CalendarFileService : Service() {
 
     private val binder : IBinder = CalendarFileServiceBinder()
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.i(App.LOG_TAG, "Started file monitoring service")
-
+    private fun init() {
         val am = getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
 
         val accounts = am.getAccountsByType(App.ACCOUNT_TYPE)
@@ -48,7 +49,37 @@ class CalendarFileService : Service() {
             _observers.add(observer)
         }
 
+        Log.i(App.LOG_TAG, "Started file monitoring service")
+    }
+
+    private val _initted: Boolean = false
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if(_initted && intent != null) {
+            when(intent.action) {
+                ACTION_RESUME -> resume()
+                ACTION_SUSPEND -> supend()
+            }
+        }
+        else {
+            init()
+        }
+
         return START_NOT_STICKY
+    }
+
+    private fun supend() {
+        for(o in _observers) {
+            o.stopWatching()
+        }
+        Log.v(App.LOG_TAG, "File watcher was suspended.")
+    }
+
+    private fun resume() {
+        for(o in _observers) {
+            o.startWatching()
+        }
+        Log.v(App.LOG_TAG, "File watcher was resumed.")
     }
 
     override fun onBind(intent: Intent?): IBinder {
@@ -66,10 +97,10 @@ class CalendarFileService : Service() {
     }
 
     override fun onDestroy() {
-        Log.v(App.LOG_TAG, "Service destroyed.")
         for(o in _observers) {
             o.stopWatching()
         }
+        Log.v(App.LOG_TAG, "Service destroyed.")
     }
 
     private fun showNotification() {

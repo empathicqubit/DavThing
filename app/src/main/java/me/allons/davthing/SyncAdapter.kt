@@ -13,6 +13,9 @@ import net.fortuna.ical4j.util.MapTimeZoneCache
 import java.util.*
 
 class SyncAdapter : AbstractThreadedSyncAdapter {
+    companion object {
+        val SYNC_REQUEST_DIRECTION = App::class.qualifiedName + ".sync_request.DIRECTION"
+    }
 
     constructor(context : Context, autoInitialize : Boolean)
             : super(context, autoInitialize) {
@@ -37,14 +40,14 @@ class SyncAdapter : AbstractThreadedSyncAdapter {
 
         val storagePath = mgr.getUserData(account, App.ACCOUNT_DATA_STORAGE_PATH)
 
-        val direction = CalendarStore.SyncDirection.valueOf(extras.getString(App.SYNC_REQUEST_DIRECTION, "TO_FILESYSTEM"))
+        val direction = CalendarStore.SyncDirection.valueOf(extras.getString(SYNC_REQUEST_DIRECTION, "TO_FILESYSTEM"))
 
         Log.v(App.LOG_TAG, "Sync direction: $direction")
 
-        val serviceIntent = Intent(context, CalendarFileService::class.java)
         try {
             if(direction == CalendarStore.SyncDirection.TO_FILESYSTEM) {
-                context.stopService(serviceIntent)
+                val serviceIntent = Intent(CalendarFileService.ACTION_SUSPEND, null, context, CalendarFileService::class.java)
+                context.startService(serviceIntent)
             }
 
             CalendarStore(Uri.parse(storagePath), context).syncEvents(provider, account, direction)
@@ -53,6 +56,7 @@ class SyncAdapter : AbstractThreadedSyncAdapter {
             Log.e(App.LOG_TAG, "There was a problem getting the events", e)
         }
         finally {
+            val serviceIntent = Intent(CalendarFileService.ACTION_RESUME, null, context, CalendarFileService::class.java)
             context.startService(serviceIntent)
         }
     }
